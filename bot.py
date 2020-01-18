@@ -64,33 +64,18 @@ class Bot:
 
         valid_moves = []
         for (move, position) in moves:
-            print(move, position)
+            # This code is trash but it works
             if position in asteroid_locations:
-                print("asteroid")
                 continue
             if position in tail_locations:
-                print("tail")
                 continue
             if move not in legal_moves:
-                print("not legal")
                 continue
             if not (0 <= position[0] < rowcount):
-                print("row wrong")
                 continue
             if not (0 <= position[0] < colcount):
-                print("col wrong")
                 continue
             valid_moves.append(move)
-
-        # valid_moves = {
-        #     move
-        #     for (move, position) in moves
-        #     if position not in asteroid_locations
-        #     and position not in tail_locations
-        #     and move in legal_moves
-        #     and 0 <= position[0] < rowcount
-        #     and 0 <= position[1] < colcount
-        # }
 
         return list(valid_moves)
 
