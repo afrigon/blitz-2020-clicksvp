@@ -201,7 +201,7 @@ class Bot:
                     parent[position] = current_position
 
         if destination not in parent:
-            return Move.FORWARD
+            return random.choice(legal_moves)[0]
 
         path = [destination]
         while path[-1] != start:
