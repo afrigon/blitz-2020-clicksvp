@@ -1,3 +1,4 @@
+from functools import partial
 from pprint import pprint
 from collections import deque
 from typing import Dict, List
@@ -24,6 +25,8 @@ class Bot:
     def get_next_move(self, game_message: GameMessage) -> Move:
         self.game = game_message.game
         self.opponents = []
+
+        print(self.game.pretty_map)
 
         for player in game_message.players:
             if player.id == self.game.player_id:
@@ -58,25 +61,26 @@ class Bot:
 
         if legal_moves:
             if len(self.player.tail) > TAIL_THRESHOLD:
-                destination = self.find_closest_owned_cell()
+                destination = self.closest_owned_cell()
                 return self.pathfind(
                     (self.player.position.x, self.player.position.y),
-                    destination,
+                    (
+                        self.player.spawn_position.x,
+                        self.player.spawn_position.y,
+                    ),
                 )
             return random.choice(legal_moves)[0]
 
         return self.move_from_direction(self.player.direction, Direction.UP)
 
     def closest_owned_cell(self):
-        col, row = self.get_moves()
-        owned = "C" + str(self.game.player_id)
+        owned = "C-" + str(self.game.player_id)
         owned_cells = {
             (rowi, coli)
-            for rowi, row in enumerate(game_map)
+            for rowi, row in enumerate(self.game.map)
             for coli, col in enumerate(row)
             if col == owned
         }
-        print(owned_cells)
         return min(
             owned_cells,
             key=partial(
