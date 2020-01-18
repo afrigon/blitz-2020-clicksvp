@@ -140,9 +140,14 @@ class Bot:
                 except:
                     pass
 
-                return self.pathfind(
-                    (self.player.position.x, self.player.position.y), self.goal
+                path = self.pathfind(
+                    (self.player.position.x, self.player.position.y), self.goal,
+                    sudoku=False
                 )
+                if path == None:
+                    self.goal = None
+                else:
+                    return path
 
             owned_cells = self.owned_cells()
             if len(self.player.tail) > TAIL_THRESHOLD:
@@ -295,7 +300,7 @@ class Bot:
             abs(p1.x - p2.x) == 0 and abs(p1.y - p2.y) == 1
         )
 
-    def pathfind(self, start, destination):
+    def pathfind(self, start, destination, sudoku=True):
         legal_moves = [Move.FORWARD, Move.TURN_LEFT, Move.TURN_RIGHT]
         Q = deque([(start, self.player.direction)])
         parent = {}
@@ -331,7 +336,10 @@ class Bot:
                     parent[position] = current_position
 
         if destination not in parent:
-            return self.suicide()
+            if sudoku:
+                return self.suicide()
+            else:
+                return None
 
         path = [destination]
         while path[-1] != start:
