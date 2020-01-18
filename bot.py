@@ -1,3 +1,4 @@
+from functools import partial
 from pprint import pprint
 from collections import deque
 from typing import Dict, List
@@ -6,6 +7,10 @@ from bot_message import *
 import random
 
 TAIL_THRESHOLD = 5
+
+
+def manhattan_distance(p1, p2):
+    return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
 
 
 class Bot:
@@ -84,18 +89,39 @@ class Bot:
                     self.goal
                 )
 
-            if len(self.player.tail) > TAIL_THRESHOLD:
-                print(self.game.pretty_map)
-                return self.pathfind(
-                    (self.player.position.x, self.player.position.y),
-                    (
-                        self.player.spawn_position.x,
-                        self.player.spawn_position.y,
-                    ),
-                )
-            return random.choice(legal_moves)[0]
+            owned_cells = self.owned_cells()
+                if len(self.player.tail) > TAIL_THRESHOLD:
+                    destination = self.closest_point_from_player(owned_cells)
+                    return self.pathfind(
+                        (self.player.position.x, self.player.position.y),
+                        destination,
+                    )
+            return self.move_away_from_owned_cells(owned_cells)
 
         return self.move_from_direction(self.player.direction, Direction.UP)
+
+    def move_away_from_owned_cells(self, owned_cells):
+        pass
+
+    def owned_cells(self):
+        owned = "C-" + str(self.game.player_id)
+        owned_cells = {
+            (coli, rowi)
+            for rowi, row in enumerate(self.game.map)
+            for coli, col in enumerate(row)
+            if col == owned
+        }
+        return owned_cells
+
+    def closest_point_from_player(self, points):
+        closest = min(
+            points,
+            key=partial(
+                manhattan_distance,
+                (self.player.position.x, self.player.position.y),
+            ),
+        )
+        return closest
 
     def move(self, direction):
         return self.move_from_direction(self.player.direction, direction)
@@ -152,9 +178,17 @@ class Bot:
             if current_position == destination:
                 break
 
-            for (move, position) in self.prune_legal_moves(
+            next_moves = self.prune_legal_moves(
                 legal_moves, current_position, current_direction
-            ):
+            )
+            next_moves = sorted(
+                next_moves,
+                key=lambda move_position: manhattan_distance(
+                    destination, move_position[1]
+                ),
+            )
+
+            for (move, position) in next_moves:
                 if move == Move.FORWARD:
                     Q.append((position, current_direction))
                 if move == Move.TURN_LEFT:
@@ -241,9 +275,9 @@ class Bot:
                 continue
             if move not in legal_moves:
                 continue
-            if not (0 <= position[0] < rowcount):
+            if not (0 <= position[1] < rowcount):
                 continue
-            if not (0 <= position[1] < colcount):
+            if not (0 <= position[0] < colcount):
                 continue
             valid_moves.append((move, position))
 
