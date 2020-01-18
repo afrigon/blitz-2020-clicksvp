@@ -666,9 +666,9 @@ def flood_fill(points):
     print("\n".join("".join(row) for row in grid))
 
     for x, y in visited:
-        grid[y][x] = 1
+        grid[x][y] = 1
 
-    print(grid)
+    print("\n".join("".join(row) for row in grid))
 
     candidates = Counter()
     for point in visited:
