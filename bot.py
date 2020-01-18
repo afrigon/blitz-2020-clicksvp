@@ -31,7 +31,7 @@ class Bot:
         self.opponents = []
         self.opponents_spawn = []
 
-        #print(self.game.pretty_map)
+        # print(self.game.pretty_map)
 
         for player in game_message.players:
             if player.id == self.game.player_id:
@@ -73,7 +73,10 @@ class Bot:
         )
 
         if self.goal:
-            if (self.player.position.x, self.player.position.y) == (self.player.spawn_position.x, self.player.spawn_position.y):
+            if (self.player.position.x, self.player.position.y) == (
+                self.player.spawn_position.x,
+                self.player.spawn_position.y,
+            ):
                 self.goal = None
             if (self.player.position.x, self.player.position.y) == self.goal:
                 self.goal = None
@@ -83,7 +86,9 @@ class Bot:
             candidate = []
             for o in self.opponents:
                 if self.opponent_in_range(o):
-                    candidate += [ (pos.x, pos.y) for pos in o.tail + [o.position]]
+                    candidate += [
+                        (pos.x, pos.y) for pos in o.tail + [o.position]
+                    ]
 
             if len(candidate) > 0:
                 self.goal = self.closest_point_from_player(candidate)
@@ -97,7 +102,12 @@ class Bot:
             if len(self.items["$"]) > 0:
                 candidate = list(self.items["$"])
                 if self.player.position != self.player.spawn_position:
-                    candidate.append((self.player.spawn_position.x, self.player.spawn_position.y))
+                    candidate.append(
+                        (
+                            self.player.spawn_position.x,
+                            self.player.spawn_position.y,
+                        )
+                    )
                 self.goal = self.closest_point_from_player(candidate)
 
                 try:
@@ -124,18 +134,34 @@ class Bot:
         return self.move_from_direction(self.player.direction, Direction.UP)
 
     def suicide(self):
-        candidate = [ (pos.x, pos.y) for pos in self.player.tail[:-2]]
+        candidate = [(pos.x, pos.y) for pos in self.player.tail[:-2]]
         candidate += list(self.items["W"])
         target = self.closest_point_from_player(candidate)
 
-        return self.move_towards(self.player.direction, (self.player.position.x, self.player.position.y), target)
+        return self.move_towards(
+            self.player.direction,
+            (self.player.position.x, self.player.position.y),
+            target,
+        )
 
     def opponent_in_range(self, o):
-        if manhattan_distance((self.player.position.x, self.player.position.y), (o.spawn_position.x, o.spawn_position.y)) <= OPPONENT_THRESHOLD:
+        if (
+            manhattan_distance(
+                (self.player.position.x, self.player.position.y),
+                (o.spawn_position.x, o.spawn_position.y),
+            )
+            <= OPPONENT_THRESHOLD
+        ):
             return False
 
         for pos in o.tail + [o.position]:
-            if manhattan_distance((self.player.position.x, self.player.position.y), (pos.x, pos.y)) <= OPPONENT_THRESHOLD:
+            if (
+                manhattan_distance(
+                    (self.player.position.x, self.player.position.y),
+                    (pos.x, pos.y),
+                )
+                <= OPPONENT_THRESHOLD
+            ):
                 return True
         return False
 
@@ -160,13 +186,13 @@ class Bot:
                 owned_count = sum(
                     1
                     for cell in owned_cells
-                    if cell[0] == position[0] and cell[1] > position[1]
+                    if cell[0] == position[0] and cell[1] < position[1]
                 )
             if direction == Direction.DOWN:
                 owned_count = sum(
                     1
                     for cell in owned_cells
-                    if cell[0] == position[0] and cell[1] < position[1]
+                    if cell[0] == position[0] and cell[1] > position[1]
                 )
             if direction == Direction.LEFT:
                 owned_count = sum(
@@ -353,7 +379,11 @@ class Bot:
         valid_moves = []
         for (move, position) in moves:
             # This code is trash but it works
-            if position in self.items["W"]or position in self.items["!"] or self.is_spawn_point(position):
+            if (
+                position in self.items["W"]
+                or position in self.items["!"]
+                or self.is_spawn_point(position)
+            ):
                 continue
             if position in tail_locations:
                 continue
