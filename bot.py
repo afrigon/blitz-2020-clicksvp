@@ -50,7 +50,7 @@ class Bot:
             (rowi, coli)
             for rowi, row in enumerate(game_map)
             for coli, col in enumerate(row)
-            if col == "W"
+            if col == TileType.ASTEROIDS
         }
 
         moves = self.get_moves()
