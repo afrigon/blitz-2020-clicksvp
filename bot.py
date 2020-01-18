@@ -1,3 +1,4 @@
+from collections import Counter
 from functools import partial
 from pprint import pprint
 from collections import deque
@@ -488,3 +489,53 @@ class Bot:
         me: Player = players_by_id[game.player_id]
 
         return [move for move in Move]
+
+
+def flood_fill(points):
+    """
+    finds all points within the set of points (assumes the set of points is
+    closed)
+    """
+    visited = set(points)
+
+    candidates = Counter()
+    for point in visited:
+        x, y = point
+        # top left corner
+        if (
+            (x + 1, y) in visited
+            and (x, y + 1) in visited
+            and (x + 1, y + 1) not in visited
+        ):
+            candidates[(x + 1, y + 1)] += 1
+        if (
+            (x, y + 1) in visited
+            and (x + 1, y + 1) in visited
+            and (x + 1, y) not in visited
+        ):
+            candidates[(x + 1, y)] += 1
+        if (
+            (x + 1, y) in visited
+            and (x + 1, y + 1) in visited
+            and (x, y + 1) not in visited
+        ):
+            candidates[(x, y + 1)] += 1
+        if (
+            (x - 1, y) in visited
+            and (x, y - 1) in visited
+            and (x - 1, y - 1) not in visited
+        ):
+            candidates[(x - 1, y - 1)] += 1
+
+    stack = [c for c, count in candidates.items() if count > 1]
+    while stack:
+        current_point = stack.pop()
+        if current_point in visited:
+            continue
+        visited.add(current_point)
+        x, y = current_point
+        for neighbor_point in [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]:
+            if neighbor_point not in visited:
+                stack.append(neighbor_point)
+
+    return visited
