@@ -61,6 +61,8 @@ class Bot:
 
         if legal_moves:
             if len(self.player.tail) > TAIL_THRESHOLD:
+                # DO NO USE, DOES NOT FIND CLOSEST OWNED CELL
+                # DO NOT DELETE, WILL FIX SOON
                 destination = self.closest_owned_cell()
                 return self.pathfind(
                     (self.player.position.x, self.player.position.y),
@@ -81,13 +83,14 @@ class Bot:
             for coli, col in enumerate(row)
             if col == owned
         }
-        return min(
+        closest = min(
             owned_cells,
             key=partial(
                 manhattan_distance,
                 (self.player.position.x, self.player.position.y),
             ),
         )
+        return closest
 
     def move(self, direction):
         return self.move_from_direction(self.player.direction, direction)
@@ -144,9 +147,17 @@ class Bot:
             if current_position == destination:
                 break
 
-            for (move, position) in self.prune_legal_moves(
+            next_moves = self.prune_legal_moves(
                 legal_moves, current_position, current_direction
-            ):
+            )
+            next_moves = sorted(
+                next_moves,
+                key=lambda move_position: manhattan_distance(
+                    destination, move_position[1]
+                ),
+            )
+
+            for (move, position) in next_moves:
                 if move == Move.FORWARD:
                     Q.append((position, current_direction))
                 if move == Move.TURN_LEFT:
