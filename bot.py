@@ -28,6 +28,8 @@ class Bot:
         self.game = game_message.game
         self.opponents = []
 
+        print(self.game.pretty_map)
+
         for player in game_message.players:
             if player.id == self.game.player_id:
                 self.player = player
@@ -66,9 +68,6 @@ class Bot:
             self.player.direction,
         )
 
-        if self.player.position == self.player.spawn_position:
-            TAIL_THRESHOLD += TAIL_INCREMENT
-
         if self.goal:
             if (self.player.position.x, self.player.position.y) == self.goal:
                 self.goal = None
@@ -97,22 +96,52 @@ class Bot:
                 )
 
             # DO NOT USE THIS, DOES NOT WORK YET
-            # return self.move_away_from_owned_cells(legal_moves, owned_cells)
-            return random.choice(legal_moves)[0]
+            return self.move_away_from_owned_cells(legal_moves, owned_cells)
 
         return self.move_from_direction(self.player.direction, Direction.UP)
 
     def move_away_from_owned_cells(self, legal_moves, owned_cells):
+        # go over legal_moves and pick move that goes towards direction that has
+        # smallest number of owned cells
+        position = (self.player.position.x, self.player.position.y)
         moves = []
         for move, position in legal_moves:
-            moves.append(
-                (
-                    move,
-                    sum(
-                        manhattan_distance(position, oc) for oc in owned_cells
-                    ),
+            if not self.can_pathfind(
+                position, self.closest_point_from_player(owned_cells)
+            ):
+                continue
+
+            direction = self.player.direction
+            if move == Move.TURN_LEFT:
+                direction = self.turn_left(direction)
+            if move == Move.TURN_RIGHT:
+                direction = self.turn_right(direction)
+            owned_count = 0
+            if direction == Direction.UP:
+                owned_count = sum(
+                    1
+                    for cell in owned_cells
+                    if cell[0] == position[0] and cell[1] > position[1]
                 )
-            )
+            if direction == Direction.DOWN:
+                owned_count = sum(
+                    1
+                    for cell in owned_cells
+                    if cell[0] == position[0] and cell[1] < position[1]
+                )
+            if direction == Direction.LEFT:
+                owned_count = sum(
+                    1
+                    for cell in owned_cells
+                    if cell[1] == position[1] and cell[0] < position[0]
+                )
+            if direction == Direction.RIGHT:
+                owned_count = sum(
+                    1
+                    for cell in owned_cells
+                    if cell[1] == position[1] and cell[0] > position[0]
+                )
+            moves.append((move, owned_count))
         return min(moves, key=lambda x: x[1])[0]
 
     def owned_cells(self):
@@ -331,11 +360,45 @@ class Bot:
                 (Move.TURN_RIGHT, (col, row + 1)),
             ]
 
-    def can_stomp_opponent(self, players_by_id):
-        pass
+    def can_pathfind(self, start, destination):
+        legal_moves = [Move.FORWARD, Move.TURN_LEFT, Move.TURN_RIGHT]
+        Q = deque([(start, self.player.direction)])
+        parent = {}
+        visited = set()
 
-    def stomp_opponent(self):
-        pass
+        while Q:
+            current_position, current_direction = Q.popleft()
+            if current_position in visited:
+                continue
+            visited.add(current_position)
+
+            if current_position == destination:
+                break
+
+            next_moves = self.prune_legal_moves(
+                legal_moves, current_position, current_direction
+            )
+            next_moves = sorted(
+                next_moves,
+                key=lambda move_position: manhattan_distance(
+                    destination, move_position[1]
+                ),
+            )
+
+            for (move, position) in next_moves:
+                if move == Move.FORWARD:
+                    Q.append((position, current_direction))
+                if move == Move.TURN_LEFT:
+                    Q.append((position, self.turn_left(current_direction)))
+                if move == Move.TURN_RIGHT:
+                    Q.append((position, self.turn_right(current_direction)))
+                if position not in parent:
+                    parent[position] = current_position
+
+        if destination not in parent:
+            return False
+
+        return True
 
     def get_legal_moves_for_current_tick(
         self, game: Game, players_by_id: Dict[int, Player]
