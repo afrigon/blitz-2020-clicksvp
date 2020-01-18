@@ -16,7 +16,7 @@ class Bot:
         self.player = None
         self.opponents = []
         self.game = None
-        self.player_id = None
+        self.goal = None
 
     def get_next_move(self, game_message: GameMessage) -> Move:
         self.game = game_message.game
@@ -43,13 +43,47 @@ class Bot:
             int, Player
         ] = game_message.generate_players_by_id_dict()
 
+        self.items = {
+            'W': set(),
+            '%': set(),
+            '$': set(),
+            '!': set()
+        }
+
+        for rowi, row in enumerate(self.game.map):
+            for coli, col in enumerate(row):
+                if col in ["$", "!", "W", "%"]:
+                    self.items[col].add((coli, rowi))
+
+        legal_moves = self.get_legal_moves_for_current_tick(	
+            game=game_message.game, players_by_id=players_by_id	
+        )
+
         legal_moves = self.prune_legal_moves(
             legal_moves,
             (self.player.position.x, self.player.position.y),
             self.player.direction,
         )
 
+        if self.goal:
+            if (self.player.position.x, self.player.position.y) == self.goal:
+                self.goal = None
+
         if legal_moves:
+            if self.goal:
+                return self.pathfind(
+                    (self.player.position.x, self.player.position.y),
+                    self.goal
+                )
+
+            # if blitzerium on the map, go for it
+            if len(self.items['$']) > 0:
+                self.goal = self.items['$'].pop()
+                return self.pathfind(
+                    (self.player.position.x, self.player.position.y),
+                    self.goal
+                )
+
             if len(self.player.tail) > TAIL_THRESHOLD:
                 print(self.game.pretty_map)
                 return self.pathfind(
@@ -191,13 +225,6 @@ class Bot:
     ):
         game_map = self.game.map
 
-        asteroid_locations = {
-            (rowi, coli)
-            for rowi, row in enumerate(game_map)
-            for coli, col in enumerate(row)
-            if col == "W"
-        }
-
         moves = self.get_moves(player_position, player_direction)
 
         rowcount = len(game_map)
@@ -208,7 +235,7 @@ class Bot:
         valid_moves = []
         for (move, position) in moves:
             # This code is trash but it works
-            if position in asteroid_locations:
+            if position in self.items['W']:
                 continue
             if position in tail_locations:
                 continue
