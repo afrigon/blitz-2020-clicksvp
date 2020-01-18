@@ -10,14 +10,14 @@ from game_message import GameMessage
 
 
 async def run():
-    uri = "ws://127.0.0.1:8765"
+    uri = "ws://192.168.187.93:8765"
 
     async with websockets.connect(uri) as websocket:
         bot = Bot()
         if "TOKEN" in os.environ:
             await websocket.send(BotMessage(type=MessageType.REGISTER, token=os.environ["TOKEN"]).to_json())
         else:
-            await websocket.send(BotMessage(type=MessageType.REGISTER, name="MyBot").to_json())
+            await websocket.send(BotMessage(type=MessageType.REGISTER, name="MonEstideBot").to_json())
 
         await game_loop(websocket=websocket, bot=bot)
 
