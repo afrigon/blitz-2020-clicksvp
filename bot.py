@@ -43,6 +43,10 @@ class Bot:
             int, Player
         ] = game_message.generate_players_by_id_dict()
 
+        legal_moves = self.get_legal_moves_for_current_tick(
+            game=game_message.game, players_by_id=players_by_id
+        )
+
         legal_moves = self.prune_legal_moves(
             legal_moves,
             (self.player.position.x, self.player.position.y),
@@ -214,9 +218,9 @@ class Bot:
                 continue
             if move not in legal_moves:
                 continue
-            if not (0 <= position[0] < rowcount):
+            if not (0 <= position[1] < rowcount):
                 continue
-            if not (0 <= position[1] < colcount):
+            if not (0 <= position[0] < colcount):
                 continue
             valid_moves.append((move, position))
 
