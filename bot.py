@@ -9,7 +9,7 @@ import random
 
 TAIL_THRESHOLD = 15
 TAIL_INCREMENT = 2
-OPPONENT_THRESHOLD = 5
+OPPONENT_THRESHOLD = 7
 
 
 def manhattan_distance(p1, p2):
