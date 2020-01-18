@@ -203,7 +203,7 @@ class Bot:
             (rowi, coli)
             for rowi, row in enumerate(game_map)
             for coli, col in enumerate(row)
-            if col == TileType.ASTEROIDS
+            if col == "W"
         }
 
         moves = self.get_moves(player_position, player_direction)
@@ -224,7 +224,7 @@ class Bot:
                 continue
             if not (0 <= position[0] < rowcount):
                 continue
-            if not (0 <= position[0] < colcount):
+            if not (0 <= position[1] < colcount):
                 continue
             valid_moves.append((move, position))
 
