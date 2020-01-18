@@ -275,14 +275,6 @@ class Bot:
     ):
         game_map = self.game.map
 
-        # asteroids AND BLACKHOLES
-        asteroid_locations = {
-            (coli, rowi)
-            for rowi, row in enumerate(game_map)
-            for coli, col in enumerate(row)
-            if col in "W!"
-        }
-
         moves = self.get_moves(player_position, player_direction)
 
         rowcount = len(game_map)
@@ -293,7 +285,7 @@ class Bot:
         valid_moves = []
         for (move, position) in moves:
             # This code is trash but it works
-            if position in self.items["W"]:
+            if position in self.items["W"] or position in self.items["!"]:
                 continue
             if position in tail_locations:
                 continue
