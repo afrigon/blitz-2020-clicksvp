@@ -11,7 +11,7 @@ from game_message import GameMessage
 
 
 async def run():
-    uri = "ws://192.168.187.93:8765"
+    uri = "ws://192.168.186.136:8765"
 
     async with websockets.connect(uri) as websocket:
         bot = Bot()
