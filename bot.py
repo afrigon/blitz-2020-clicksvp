@@ -6,7 +6,8 @@ from game_message import *
 from bot_message import *
 import random
 
-TAIL_THRESHOLD = 5
+TAIL_THRESHOLD = 10
+TAIL_INCREMENT = 2
 
 
 def manhattan_distance(p1, p2):
@@ -24,6 +25,7 @@ class Bot:
         self.goal = None
 
     def get_next_move(self, game_message: GameMessage) -> Move:
+        global TAIL_THRESHOLD
         self.game = game_message.game
         self.opponents = []
 
@@ -48,12 +50,7 @@ class Bot:
             int, Player
         ] = game_message.generate_players_by_id_dict()
 
-        self.items = {
-            'W': set(),
-            '%': set(),
-            '$': set(),
-            '!': set()
-        }
+        self.items = {"W": set(), "%": set(), "$": set(), "!": set()}
 
         for rowi, row in enumerate(self.game.map):
             for coli, col in enumerate(row):
@@ -70,6 +67,9 @@ class Bot:
             self.player.direction,
         )
 
+        # TODO: EXPERIMENTAL, DO NOT USE YET
+        if self.player.position == self.player.spawn_position:
+            TAIL_THRESHOLD += TAIL_INCREMENT
         if self.goal:
             if (self.player.position.x, self.player.position.y) == self.goal:
                 self.goal = None
@@ -77,18 +77,16 @@ class Bot:
         if legal_moves:
             if self.goal:
                 return self.pathfind(
-                    (self.player.position.x, self.player.position.y),
-                    self.goal
+                    (self.player.position.x, self.player.position.y), self.goal
                 )
 
             # if blitzerium on the map, go for it
-            if len(self.items['$']) > 0:
-                self.goal = self.closest_point_from_player(self.items['$'])
-                self.items['$'].remove(self.goal)
+            if len(self.items["$"]) > 0:
+                self.goal = self.closest_point_from_player(self.items["$"])
+                self.items["$"].remove(self.goal)
 
                 return self.pathfind(
-                    (self.player.position.x, self.player.position.y),
-                    self.goal
+                    (self.player.position.x, self.player.position.y), self.goal
                 )
 
             owned_cells = self.owned_cells()
@@ -98,20 +96,33 @@ class Bot:
                     (self.player.position.x, self.player.position.y),
                     destination,
                 )
-            return self.move_away_from_owned_cells(owned_cells)
+            # DO NOT USE THIS, DOES NOT WORK YET
+            # return self.move_away_from_owned_cells(legal_moves, owned_cells)
+            return random.choice(legal_moves)[0]
 
         return self.move_from_direction(self.player.direction, Direction.UP)
 
-    def move_away_from_owned_cells(self, owned_cells):
-        pass
+    def move_away_from_owned_cells(self, legal_moves, owned_cells):
+        moves = []
+        for move, position in legal_moves:
+            moves.append(
+                (
+                    move,
+                    sum(
+                        manhattan_distance(position, oc) for oc in owned_cells
+                    ),
+                )
+            )
+        return min(moves, key=lambda x: x[1])[0]
 
     def owned_cells(self):
         owned = "C-" + str(self.game.player_id)
+        owned_planet = "%-" + str(self.game.player_id)
         owned_cells = {
             (coli, rowi)
             for rowi, row in enumerate(self.game.map)
             for coli, col in enumerate(row)
-            if col == owned
+            if col in [owned, owned_planet]
         }
         return owned_cells
 
@@ -208,7 +219,6 @@ class Bot:
             position = path[-1]
             path.append(parent[position])
 
-
         # TODO: store path instead of recomputing every time
 
         next_position = list(reversed(path))[1]
@@ -265,6 +275,14 @@ class Bot:
     ):
         game_map = self.game.map
 
+        # asteroids AND BLACKHOLES
+        asteroid_locations = {
+            (coli, rowi)
+            for rowi, row in enumerate(game_map)
+            for coli, col in enumerate(row)
+            if col in "W!"
+        }
+
         moves = self.get_moves(player_position, player_direction)
 
         rowcount = len(game_map)
@@ -275,7 +293,7 @@ class Bot:
         valid_moves = []
         for (move, position) in moves:
             # This code is trash but it works
-            if position in self.items['W']:
+            if position in self.items["W"]:
                 continue
             if position in tail_locations:
                 continue
