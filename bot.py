@@ -73,6 +73,8 @@ class Bot:
         )
 
         if self.goal:
+            if (self.player.position.x, self.player.position.y) == (self.player.spawn_position.x, self.player.spawn_position.y):
+                self.goal = None
             if (self.player.position.x, self.player.position.y) == self.goal:
                 self.goal = None
 
