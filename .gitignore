@@ -2,3 +2,4 @@ venv
 DS_Store
 *.pyc
 dive.log
+__pycache__
