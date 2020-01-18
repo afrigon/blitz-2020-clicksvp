@@ -25,6 +25,8 @@ class Bot:
         self.opponents = []
         self.game = None
         self.goal = None
+        self.opponents_spawn = []
+        self.opponents = []
 
     def get_next_move(self, game_message: GameMessage) -> Move:
         try:
@@ -47,18 +49,23 @@ class Bot:
     def _get_next_move(self, game_message: GameMessage) -> Move:
         global TAIL_THRESHOLD
         self.game = game_message.game
-        self.opponents = []
-        self.opponents_spawn = []
+        
+        
         # print(self.game.pretty_map)
 
-        for player in game_message.players:
-            if player.id == self.game.player_id:
-                self.player = player
-            else:
-                self.opponents.append(player)
+        if not self.player:
+            print("Set player")
+            for player in game_message.players:
+                if player.id == self.game.player_id:
+                    self.player = player
+                else:
+                    self.opponents.append(player)
+                    self.opponents_spawn = [player.spawn_position]
+        else:
+            self.player = game_message.players[self.player.id]
 
         for o in self.opponents:
-            self.opponents_spawn.append(o.spawn_position)
+            
             if self.is_adjacent(o.position, self.player.position) and o.position != o.spawn_position:
                 if o.position.x < self.player.position.x:
                     return self.move(Direction.LEFT)
