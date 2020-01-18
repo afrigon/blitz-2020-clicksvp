@@ -7,7 +7,9 @@ from bot_message import *
 import random
 
 TAIL_THRESHOLD = 15
-TAIL_INCREMENT = 1
+TAIL_INCREMENT = 2
+OPPONENT_THRESHOLD = 5
+
 
 
 def manhattan_distance(p1, p2):
@@ -30,7 +32,7 @@ class Bot:
         self.opponents = []
         self.opponents_spawn = []
 
-        print(self.game.pretty_map)
+        #print(self.game.pretty_map)
 
         for player in game_message.players:
             if player.id == self.game.player_id:
@@ -61,7 +63,6 @@ class Bot:
                 if col in ["$", "!", "W", "%"]:
                     self.items[col].add((coli, rowi))
 
-        print(self.game.pretty_map)
         legal_moves = self.get_legal_moves_for_current_tick(
             game=game_message.game, players_by_id=players_by_id
         )
@@ -73,10 +74,21 @@ class Bot:
         )
 
         if self.goal:
+            if (self.player.position.x, self.player.position.y) == (self.player.spawn_position.x, self.player.spawn_position.y):
+                self.goal = None
             if (self.player.position.x, self.player.position.y) == self.goal:
                 self.goal = None
 
         if legal_moves:
+            # if the tail of someone is close enough, go for it
+            candidate = []
+            for o in self.opponents:
+                if self.opponent_in_range(o):
+                    candidate += [ (pos.x, pos.y) for pos in o.tail + [o.position]]
+
+            if len(candidate) > 0:
+                self.goal = self.closest_point_from_player(candidate)
+
             if self.goal:
                 return self.pathfind(
                     (self.player.position.x, self.player.position.y), self.goal
@@ -84,8 +96,15 @@ class Bot:
 
             # if blitzerium on the map, go for it
             if len(self.items["$"]) > 0:
-                self.goal = self.closest_point_from_player(self.items["$"])
-                self.items["$"].remove(self.goal)
+                candidate = list(self.items["$"])
+                if self.player.position != self.player.spawn_position:
+                    candidate.append((self.player.spawn_position.x, self.player.spawn_position.y))
+                self.goal = self.closest_point_from_player(candidate)
+
+                try:
+                    self.items["$"].remove(self.goal)
+                except:
+                    pass
 
                 return self.pathfind(
                     (self.player.position.x, self.player.position.y), self.goal
@@ -94,6 +113,7 @@ class Bot:
             owned_cells = self.owned_cells()
             if len(self.player.tail) > TAIL_THRESHOLD:
                 destination = self.closest_point_from_player(owned_cells)
+
                 return self.pathfind(
                     (self.player.position.x, self.player.position.y),
                     destination,
@@ -103,6 +123,22 @@ class Bot:
             return self.move_away_from_owned_cells(legal_moves, owned_cells)
 
         return self.move_from_direction(self.player.direction, Direction.UP)
+
+    def suicide(self):
+        candidate = [ (pos.x, pos.y) for pos in self.player.tail[:-2]]
+        candidate += list(self.items["W"])
+        target = self.closest_point_from_player(candidate)
+
+        return self.move_towards(self.player.direction, (self.player.position.x, self.player.position.y), target)
+
+    def opponent_in_range(self, o):
+        if manhattan_distance((self.player.position.x, self.player.position.y), (o.spawn_position.x, o.spawn_position.y)) <= OPPONENT_THRESHOLD:
+            return False
+
+        for pos in o.tail + [o.position]:
+            if manhattan_distance((self.player.position.x, self.player.position.y), (pos.x, pos.y)) <= OPPONENT_THRESHOLD:
+                return True
+        return False
 
     def move_away_from_owned_cells(self, legal_moves, owned_cells):
         # go over legal_moves and pick move that goes towards direction that has
@@ -245,10 +281,7 @@ class Bot:
                     parent[position] = current_position
 
         if destination not in parent:
-            next_moves = self.prune_legal_moves(
-                legal_moves, start, self.player.direction
-            )
-            return random.choice(next_moves)[0]
+            return self.suicide()
 
         path = [destination]
         while path[-1] != start:
