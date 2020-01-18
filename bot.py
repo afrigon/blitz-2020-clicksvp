@@ -7,7 +7,7 @@ from bot_message import *
 import random
 
 TAIL_THRESHOLD = 15
-
+TAIL_INCREMENT = 1
 
 def manhattan_distance(p1, p2):
     return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
@@ -27,6 +27,7 @@ class Bot:
         global TAIL_THRESHOLD
         self.game = game_message.game
         self.opponents = []
+        self.opponents_spawn = []
 
         print(self.game.pretty_map)
 
@@ -37,6 +38,7 @@ class Bot:
                 self.opponents.append(player)
 
         for o in self.opponents:
+            self.opponents_spawn.append(o.spawn_position)
             if self.is_adjacent(o.position, self.player.position):
                 if o.position.x < self.player.position.x:
                     return self.move(Direction.LEFT)
@@ -58,6 +60,7 @@ class Bot:
                 if col in ["$", "!", "W", "%"]:
                     self.items[col].add((coli, rowi))
 
+        print(self.game.pretty_map)
         legal_moves = self.get_legal_moves_for_current_tick(
             game=game_message.game, players_by_id=players_by_id
         )
@@ -241,7 +244,10 @@ class Bot:
                     parent[position] = current_position
 
         if destination not in parent:
-            return random.choice(legal_moves)[0]
+            next_moves = self.prune_legal_moves(
+                legal_moves, start, self.player.direction
+            )
+            return random.choice(next_moves)[0]
 
         path = [destination]
         while path[-1] != start:
@@ -314,7 +320,7 @@ class Bot:
         valid_moves = []
         for (move, position) in moves:
             # This code is trash but it works
-            if position in self.items["W"] or position in self.items["!"]:
+            if position in self.items["W"]or position in self.items["!"] or self.is_spawn_point(position):
                 continue
             if position in tail_locations:
                 continue
@@ -327,6 +333,12 @@ class Bot:
             valid_moves.append((move, position))
 
         return list(valid_moves)
+
+    def is_spawn_point(self, position):
+        for spawn_point in self.opponents_spawn:
+            if position == (spawn_point.x, spawn_point.y):
+                return True
+        return False
 
     def tail_locations(self):
         locations = [(p.x, p.y) for p in self.player.tail[1:]]
