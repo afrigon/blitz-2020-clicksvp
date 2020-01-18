@@ -8,6 +8,10 @@ import random
 TAIL_THRESHOLD = 5
 
 
+def manhattan_distance(p1, p2):
+    return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
+
+
 class Bot:
     def __init__(self):
         """
@@ -16,7 +20,6 @@ class Bot:
         self.player = None
         self.opponents = []
         self.game = None
-        self.player_id = None
 
     def get_next_move(self, game_message: GameMessage) -> Move:
         self.game = game_message.game
@@ -51,17 +54,32 @@ class Bot:
 
         if legal_moves:
             if len(self.player.tail) > TAIL_THRESHOLD:
-                print(self.game.pretty_map)
+                destination = self.find_closest_owned_cell()
                 return self.pathfind(
                     (self.player.position.x, self.player.position.y),
-                    (
-                        self.player.spawn_position.x,
-                        self.player.spawn_position.y,
-                    ),
+                    destination,
                 )
             return random.choice(legal_moves)[0]
 
         return self.move_from_direction(self.player.direction, Direction.UP)
+
+    def closest_owned_cell(self):
+        col, row = self.get_moves()
+        owned = "C" + str(self.game.player_id)
+        owned_cells = {
+            (rowi, coli)
+            for rowi, row in enumerate(game_map)
+            for coli, col in enumerate(row)
+            if col == owned
+        }
+        print(owned_cells)
+        return min(
+            owned_cells,
+            key=partial(
+                manhattan_distance,
+                (self.player.position.x, self.player.position.y),
+            ),
+        )
 
     def move(self, direction):
         return self.move_from_direction(self.player.direction, direction)
