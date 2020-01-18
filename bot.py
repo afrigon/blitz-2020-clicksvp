@@ -60,8 +60,8 @@ class Bot:
                 if col in ["$", "!", "W", "%"]:
                     self.items[col].add((coli, rowi))
 
-        legal_moves = self.get_legal_moves_for_current_tick(	
-            game=game_message.game, players_by_id=players_by_id	
+        legal_moves = self.get_legal_moves_for_current_tick(
+            game=game_message.game, players_by_id=players_by_id
         )
 
         legal_moves = self.prune_legal_moves(
@@ -200,10 +200,14 @@ class Bot:
                 if position not in parent:
                     parent[position] = current_position
 
+        if destination not in parent:
+            return Move.FORWARD
+
         path = [destination]
         while path[-1] != start:
             position = path[-1]
             path.append(parent[position])
+
 
         # TODO: store path instead of recomputing every time
 
