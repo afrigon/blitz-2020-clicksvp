@@ -41,7 +41,7 @@ class Bot:
             print(self.game.pretty_map)
             return random.choice(legal_moves)
 
-        return Direction.FORWARD
+        return Direction.UP
 
     def prune_legal_moves(self, legal_moves):
         game_map = self.game.map
