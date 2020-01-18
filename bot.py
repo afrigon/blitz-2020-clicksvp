@@ -27,13 +27,13 @@ class Bot:
         for o in self.opponents:
             if self.is_adjacent(o.position, self.player.position):
                 if o.position.x < self.player.position.x:
-                    return self.move_from_direction(self.player.direction, Direction.LEFT)
+                    return self.move(Direction.LEFT)
                 if o.position.x > self.player.position.x:
-                    return self.move_from_direction(self.player.direction, Direction.RIGHT)
+                    return self.move(Direction.RIGHT)
                 if o.position.y > self.player.position.y:
-                    return self.move_from_direction(self.player.direction, Direction.DOWN)
+                    return self.move(Direction.DOWN)
                 if o.position.y < self.player.position.y:
-                    return self.move_from_direction(self.player.direction, Direction.UP)
+                    return self.move(Direction.UP)
 
         players_by_id: Dict[
             int, Player
@@ -55,6 +55,9 @@ class Bot:
             return random.choice(legal_moves)
 
         return self.move_from_direction(self.player.direction, Direction.UP)
+
+    def move(self, direction):
+        return self.move_from_direction(self.player.direction, direction)
 
     def move_from_direction(self, player_direction, move_direction):
         if player_direction == Direction.UP:
