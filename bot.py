@@ -38,9 +38,10 @@ class Bot:
                 )
                 if len(next_moves) > 0:
                     return random.choice(next_moves[0])
-                return None
+                return Move.TURN_LEFT
             except Exception as e:
                 print(e)
+                return Move.TURN_LEFT
 
     def _get_next_move(self, game_message: GameMessage) -> Move:
         global TAIL_THRESHOLD
