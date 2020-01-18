@@ -1,8 +1,11 @@
 from pprint import pprint
+from collections import deque
 from typing import Dict, List
 from game_message import *
 from bot_message import *
 import random
+
+TAIL_THRESHOLD = 5
 
 
 class Bot:
@@ -30,20 +33,111 @@ class Bot:
         self.opponent = players_by_id.get(1, None)
         self.game = game_message.game
 
-        print("legal_moves: ", legal_moves)
-        legal_moves = self.prune_legal_moves(legal_moves)
-        print("pruned legal moves: ", legal_moves)
-
+        legal_moves = self.prune_legal_moves(
+            legal_moves,
+            (self.player.position.x, self.player.position.y),
+            self.player.direction,
+        )
         if legal_moves:
-            print(self.player.position)
-            print(self.player.direction)
-            print(legal_moves)
-            print(self.game.pretty_map)
-            return random.choice(legal_moves)
+            if len(self.player.tail) > TAIL_THRESHOLD:
+                print(self.game.pretty_map)
+                return self.pathfind(
+                    (self.player.position.x, self.player.position.y),
+                    (
+                        self.player.spawn_position.x,
+                        self.player.spawn_position.y,
+                    ),
+                )
+            return random.choice(legal_moves)[0]
 
         return Direction.FORWARD
 
-    def prune_legal_moves(self, legal_moves):
+    def pathfind(self, start, destination):
+        legal_moves = [Move.FORWARD, Move.TURN_LEFT, Move.TURN_RIGHT]
+        Q = deque([(start, self.player.direction)])
+        parent = {}
+        visited = set()
+
+        while Q:
+            current_position, current_direction = Q.popleft()
+            if current_position in visited:
+                continue
+            visited.add(current_position)
+
+            if current_position == destination:
+                break
+
+            for (move, position) in self.prune_legal_moves(
+                legal_moves, current_position, current_direction
+            ):
+                if move == Move.FORWARD:
+                    Q.append((position, current_direction))
+                if move == Move.TURN_LEFT:
+                    Q.append((position, self.turn_left(current_direction)))
+                if move == Move.TURN_RIGHT:
+                    Q.append((position, self.turn_right(current_direction)))
+                if position not in parent:
+                    parent[position] = current_position
+
+        path = [destination]
+        while path[-1] != start:
+            position = path[-1]
+            path.append(parent[position])
+
+        # TODO: store path instead of recomputing every time
+
+        next_position = list(reversed(path))[1]
+
+        return self.move_towards(self.player.direction, start, next_position)
+
+    def move_towards(self, direction, from_, to_):
+        fx, fy = from_
+        tx, ty = to_
+
+        if direction == Direction.UP:
+            if ty < fy:
+                return Move.FORWARD
+            if tx < fx:
+                return Move.TURN_LEFT
+            return Move.TURN_RIGHT
+        if direction == Direction.DOWN:
+            if ty > fy:
+                return Move.FORWARD
+            if tx < fx:
+                return Move.TURN_RIGHT
+            return Move.TURN_LEFT
+        if direction == Direction.LEFT:
+            if tx < fx:
+                return Move.FORWARD
+            if ty > fy:
+                return Move.TURN_LEFT
+            return Move.TURN_RIGHT
+        if direction == Direction.RIGHT:
+            if tx > fx:
+                return Move.FORWARD
+            if ty > fy:
+                return Move.TURN_RIGHT
+            return Move.TURN_LEFT
+
+    def turn_left(self, current_direction):
+        return {
+            Direction.UP: Direction.LEFT,
+            Direction.LEFT: Direction.DOWN,
+            Direction.DOWN: Direction.RIGHT,
+            Direction.RIGHT: Direction.UP,
+        }[current_direction]
+
+    def turn_right(self, current_direction):
+        return {
+            Direction.UP: Direction.RIGHT,
+            Direction.RIGHT: Direction.DOWN,
+            Direction.DOWN: Direction.LEFT,
+            Direction.LEFT: Direction.UP,
+        }[current_direction]
+
+    def prune_legal_moves(
+        self, legal_moves, player_position, player_direction
+    ):
         game_map = self.game.map
 
         asteroid_locations = {
@@ -53,14 +147,12 @@ class Bot:
             if col == "W"
         }
 
-        moves = self.get_moves()
-        print("moves: ", moves)
+        moves = self.get_moves(player_position, player_direction)
 
         rowcount = len(game_map)
         colcount = len(game_map[0])
 
         tail_locations = self.tail_locations()
-        print("tail: ", tail_locations)
 
         valid_moves = []
         for (move, position) in moves:
@@ -75,18 +167,16 @@ class Bot:
                 continue
             if not (0 <= position[0] < colcount):
                 continue
-            valid_moves.append(move)
+            valid_moves.append((move, position))
 
         return list(valid_moves)
 
     def tail_locations(self):
-        locations = [(p.x, p.y) for p in self.player.tail]
+        locations = [(p.x, p.y) for p in self.player.tail[1:]]
         return locations
 
-    def get_moves(self):
-        position = self.player.position
-        direction = self.player.direction
-        col, row = position.x, position.y
+    def get_moves(self, position, direction):
+        col, row = position
 
         if direction == Direction.UP:
             return [
