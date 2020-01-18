@@ -6,8 +6,9 @@ from game_message import *
 from bot_message import *
 import random
 
-TAIL_THRESHOLD = 10
+TAIL_THRESHOLD = 15
 TAIL_INCREMENT = 2
+OPPONENT_THRESHOLD = 5
 
 
 def manhattan_distance(p1, p2):
@@ -76,6 +77,15 @@ class Bot:
                 self.goal = None
 
         if legal_moves:
+            # if the tail of someone is close enough, go for it
+            candidate = []
+            for o in self.opponents:
+                if self.opponent_in_range(o):
+                    candidate += [ (pos.x, pos.y) for pos in o.tail + [o.position]]
+
+            if len(candidate) > 0:
+                self.goal = self.closest_point_from_player(candidate)
+
             if self.goal:
                 return self.pathfind(
                     (self.player.position.x, self.player.position.y), self.goal
@@ -83,8 +93,15 @@ class Bot:
 
             # if blitzerium on the map, go for it
             if len(self.items["$"]) > 0:
-                self.goal = self.closest_point_from_player(self.items["$"])
-                self.items["$"].remove(self.goal)
+                candidate = list(self.items["$"])
+                if self.player.position != self.player.spawn_position:
+                    candidate.append((self.player.spawn_position.x, self.player.spawn_position.y))
+                self.goal = self.closest_point_from_player(candidate)
+
+                try:
+                    self.items["$"].remove(self.goal)
+                except:
+                    pass
 
                 return self.pathfind(
                     (self.player.position.x, self.player.position.y), self.goal
@@ -102,6 +119,15 @@ class Bot:
             return random.choice(legal_moves)[0]
 
         return self.move_from_direction(self.player.direction, Direction.UP)
+
+    def opponent_in_range(self, o):
+        if manhattan_distance((self.player.position.x, self.player.position.y), (o.spawn_position.x, o.spawn_position.y)) <= OPPONENT_THRESHOLD:
+            return False
+
+        for pos in o.tail + [o.position]:
+            if manhattan_distance((self.player.position.x, self.player.position.y), (pos.x, pos.y)) <= OPPONENT_THRESHOLD:
+                return True
+        return False
 
     def move_away_from_owned_cells(self, legal_moves, owned_cells):
         moves = []
