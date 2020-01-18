@@ -89,6 +89,9 @@ class Bot:
                 self.goal = self.closest_point_from_player(candidate)
 
             if self.goal:
+                self.pathfind_blackhole(
+                    (self.player.position.x, self.player.position.y), self.goal
+                )
                 return self.pathfind(
                     (self.player.position.x, self.player.position.y), self.goal
                 )
@@ -243,6 +246,62 @@ class Bot:
         return (abs(p1.x - p2.x) == 1 and abs(p1.y - p2.y) == 0) or (
             abs(p1.x - p2.x) == 0 and abs(p1.y - p2.y) == 1
         )
+
+    def pathfind_blackhole(self, start, destination):
+        path = self.pathfind_with_illegal(start, destination, [])
+        path += self.pathfind_with_illegal(destination, (self.player.spawn_position.x, self.player.spawn_position.y), path)
+        path += self.owned_cells
+        path += [(pos.x, pos.y) for pos in self.player.tail + [self.player.position]]
+
+        print(self.game.pretty_map)
+        print(path)
+
+
+    def pathfind_with_illegal(self, start, destination, illegal):
+        legal_moves = [Move.FORWARD, Move.TURN_LEFT, Move.TURN_RIGHT]
+        Q = deque([(start, self.player.direction)])
+        parent = {}
+        visited = set()
+
+        while Q:
+            current_position, current_direction = Q.popleft()
+            if current_position in visited:
+                continue
+            visited.add(current_position)
+
+            if current_position == destination:
+                break
+
+            next_moves = self.prune_legal_moves(
+                legal_moves, current_position, current_direction
+            )
+            next_moves = list(filter(lambda x: x not in illegal, next_moves))
+            next_moves = sorted(
+                next_moves,
+                key=lambda move_position: manhattan_distance(
+                    destination, move_position[1]
+                ),
+            )
+
+            for (move, position) in next_moves:
+                if move == Move.FORWARD:
+                    Q.append((position, current_direction))
+                if move == Move.TURN_LEFT:
+                    Q.append((position, self.turn_left(current_direction)))
+                if move == Move.TURN_RIGHT:
+                    Q.append((position, self.turn_right(current_direction)))
+                if position not in parent:
+                    parent[position] = current_position
+
+        if destination not in parent:
+            return []
+
+        path = [destination]
+        while path[-1] != start:
+            position = path[-1]
+            path.append(parent[position])
+
+        return list(reversed(path))
 
     def pathfind(self, start, destination):
         legal_moves = [Move.FORWARD, Move.TURN_LEFT, Move.TURN_RIGHT]
