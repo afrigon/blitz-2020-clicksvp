@@ -31,7 +31,7 @@ class Bot:
         self.opponents = []
         self.opponents_spawn = []
 
-        print(self.game.pretty_map)
+        #print(self.game.pretty_map)
 
         for player in game_message.players:
             if player.id == self.game.player_id:
@@ -110,6 +110,7 @@ class Bot:
             owned_cells = self.owned_cells()
             if len(self.player.tail) > TAIL_THRESHOLD:
                 destination = self.closest_point_from_player(owned_cells)
+
                 return self.pathfind(
                     (self.player.position.x, self.player.position.y),
                     destination,
@@ -119,6 +120,13 @@ class Bot:
             return self.move_away_from_owned_cells(legal_moves, owned_cells)
 
         return self.move_from_direction(self.player.direction, Direction.UP)
+
+    def suicide(self):
+        candidate = [ (pos.x, pos.y) for pos in self.player.tail[:-2]]
+        candidate += list(self.items["W"])
+        target = self.closest_point_from_player(candidate)
+
+        return self.move_towards(self.player.direction, (self.player.position.x, self.player.position.y), target)
 
     def opponent_in_range(self, o):
         if manhattan_distance((self.player.position.x, self.player.position.y), (o.spawn_position.x, o.spawn_position.y)) <= OPPONENT_THRESHOLD:
@@ -270,10 +278,7 @@ class Bot:
                     parent[position] = current_position
 
         if destination not in parent:
-            next_moves = self.prune_legal_moves(
-                legal_moves, start, self.player.direction
-            )
-            return random.choice(next_moves)[0]
+            return self.suicide()
 
         path = [destination]
         while path[-1] != start:
