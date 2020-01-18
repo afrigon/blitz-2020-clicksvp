@@ -9,6 +9,7 @@ import random
 TAIL_THRESHOLD = 15
 TAIL_INCREMENT = 1
 
+
 def manhattan_distance(p1, p2):
     return abs(p1[0] - p2[0]) + abs(p1[1] - p2[1])
 
@@ -124,13 +125,13 @@ class Bot:
                 owned_count = sum(
                     1
                     for cell in owned_cells
-                    if cell[0] == position[0] and cell[1] > position[1]
+                    if cell[0] == position[0] and cell[1] < position[1]
                 )
             if direction == Direction.DOWN:
                 owned_count = sum(
                     1
                     for cell in owned_cells
-                    if cell[0] == position[0] and cell[1] < position[1]
+                    if cell[0] == position[0] and cell[1] > position[1]
                 )
             if direction == Direction.LEFT:
                 owned_count = sum(
@@ -320,7 +321,11 @@ class Bot:
         valid_moves = []
         for (move, position) in moves:
             # This code is trash but it works
-            if position in self.items["W"]or position in self.items["!"] or self.is_spawn_point(position):
+            if (
+                position in self.items["W"]
+                or position in self.items["!"]
+                or self.is_spawn_point(position)
+            ):
                 continue
             if position in tail_locations:
                 continue
