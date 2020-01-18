@@ -40,7 +40,10 @@ class Bot:
         colcount = len(game_map[0])
 
         asteroid_locations = {
-            (point.x, point.y) for row in game_map for col in row if col == "W"
+            (rowi, coli)
+            for rowi, row in enumerate(game_map)
+            for coli, col in enumerate(row)
+            if col == "W"
         }
 
         moves = self.get_moves()
@@ -54,34 +57,38 @@ class Bot:
             and 0 <= position[1] < colcount
         }
 
-        return valid_moves
+        print(self.game.pretty_map)
+
+        return list(valid_moves)
 
     def get_moves(self):
         position = self.player.position
+        direction = self.player.direction
         row, col = position.x, position.y
-        if self.direction == "UP":
+
+        if direction == Direction.UP:
             return [
-                ("FORWARD", (row - 1, col)),
-                ("TURN_LEFT", (row, col - 1)),
-                ("TURN_RIGHT", (row, col + 1)),
+                (Move.FORWARD, (row - 1, col)),
+                (Move.TURN_LEFT, (row, col - 1)),
+                (Move.TURN_RIGHT, (row, col + 1)),
             ]
-        if self.direction == "DOWN":
+        if direction == Direction.DOWN:
             return [
-                ("FORWARD", (row + 1, col)),
-                ("TURN_LEFT", (row, col + 1)),
-                ("TURN_RIGHT", (row, col - 1)),
+                (Move.FORWARD, (row + 1, col)),
+                (Move.TURN_LEFT, (row, col + 1)),
+                (Move.TURN_RIGHT, (row, col - 1)),
             ]
-        if self.direction == "LEFT":
+        if direction == Direction.LEFT:
             return [
-                ("FORWARD", (row, col - 1)),
-                ("TURN_LEFT", (row - 1, col)),
-                ("TURN_RIGHT", (row + 1, col)),
+                (Move.FORWARD, (row, col - 1)),
+                (Move.TURN_LEFT, (row - 1, col)),
+                (Move.TURN_RIGHT, (row + 1, col)),
             ]
-        if self.direction == "RIGHT":
+        if direction == Direction.RIGHT:
             return [
-                ("FORWARD", (row, col + 1)),
-                ("TURN_LEFT", (row + 1, col)),
-                ("TURN_RIGHT", (row - 1, col)),
+                (Move.FORWARD, (row, col + 1)),
+                (Move.TURN_LEFT, (row + 1, col)),
+                (Move.TURN_RIGHT, (row - 1, col)),
             ]
 
     def can_stomp_opponent(self, players_by_id):
