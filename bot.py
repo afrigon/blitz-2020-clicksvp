@@ -60,17 +60,21 @@ class Bot:
         )
 
         if legal_moves:
+            owned_cells = self.owned_cells()
             if len(self.player.tail) > TAIL_THRESHOLD:
-                destination = self.closest_owned_cell()
+                destination = self.closest_point_from_player(owned_cells)
                 return self.pathfind(
                     (self.player.position.x, self.player.position.y),
                     destination,
                 )
-            return random.choice(legal_moves)[0]
+            return self.move_away_from_owned_cells(owned_cells)
 
         return self.move_from_direction(self.player.direction, Direction.UP)
 
-    def closest_owned_cell(self):
+    def move_away_from_owned_cells(self, owned_cells):
+        pass
+
+    def owned_cells(self):
         owned = "C-" + str(self.game.player_id)
         owned_cells = {
             (coli, rowi)
@@ -78,8 +82,11 @@ class Bot:
             for coli, col in enumerate(row)
             if col == owned
         }
+        return owned_cells
+
+    def closest_point_from_player(self, points):
         closest = min(
-            owned_cells,
+            points,
             key=partial(
                 manhattan_distance,
                 (self.player.position.x, self.player.position.y),
