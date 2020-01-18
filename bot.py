@@ -11,14 +11,31 @@ class Bot:
         This method should be use to initialize some variables you will need throughout the game.
         """
         self.player = None
-        self.opponent = None
+        self.opponents = []
         self.game = None
         self.player_id = None
 
     def get_next_move(self, game_message: GameMessage) -> Move:
-        """
-        Here is where the magic happens, for now the moves are random. I bet you can do better ;)
-        """
+        self.game = game_message.game
+        self.opponents = []
+
+        for player in game_message.players:
+            if player.id == self.game.player_id:
+                self.player = player
+            else:
+                self.opponents.append(player)
+
+        for o in self.opponents:
+            if self.is_adjacent(o.position, self.player.position):
+                if o.position.x < self.player.position.x:
+                    return self.move_from_direction(self.player.direction, Direction.LEFT)
+                if o.position.x > self.player.position.x:
+                    return self.move_from_direction(self.player.direction, Direction.RIGHT)
+                if o.position.y > self.player.position.y:
+                    return self.move_from_direction(self.player.direction, Direction.DOWN)
+                if o.position.y < self.player.position.y:
+                    return self.move_from_direction(self.player.direction, Direction.UP)
+
         players_by_id: Dict[
             int, Player
         ] = game_message.generate_players_by_id_dict()
@@ -26,23 +43,52 @@ class Bot:
         legal_moves = self.get_legal_moves_for_current_tick(
             game=game_message.game, players_by_id=players_by_id
         )
-        self.game = game_message.game
-        self.player_id = self.game.player_id
-        self.player = players_by_id[self.player_id]
-        self.opponent = players_by_id.get(1, None)  # TODO add others opoenents 
 
-        print("legal_moves: ", legal_moves)
         legal_moves = self.prune_legal_moves(legal_moves)
-        print("pruned legal moves: ", legal_moves)
 
         if legal_moves:
-            print(self.player.position)
-            print(self.player.direction)
-            print(legal_moves)
-            print(self.game.pretty_map)
+            #print(self.player.position)
+            #print(self.player.direction)
+            #print(legal_moves)
+            #print(self.game.pretty_map)
             return random.choice(legal_moves)
 
-        return Direction.UP
+        return self.move_from_direction(self.player.direction, Direction.UP)
+
+    def move_from_direction(self, player_direction, move_direction):
+        if player_direction == Direction.UP:
+            if move_direction == Direction.UP:
+                return Move.FORWARD
+            elif move_direction == Direction.LEFT:
+                return Move.TURN_LEFT
+            elif move_direction == Direction.RIGHT:
+                return Move.TURN_RIGHT
+        elif player_direction == Direction.DOWN:
+            if move_direction == Direction.DOWN:
+                return Move.FORWARD
+            elif move_direction == Direction.LEFT:
+                return Move.TURN_RIGHT
+            elif move_direction == Direction.RIGHT:
+                return Move.TURN_LEFT
+        elif player_direction == Direction.LEFT:
+            if move_direction == Direction.UP:
+                return Move.TURN_RIGHT
+            if move_direction == Direction.DOWN:
+                return Move.TURN_LEFT
+            elif move_direction == Direction.LEFT:
+                return Move.FORWARD
+        elif player_direction == Direction.RIGHT:
+            if move_direction == Direction.UP:
+                return Move.TURN_LEFT
+            if move_direction == Direction.DOWN:
+                return Move.TURN_RIGHT
+            elif move_direction == Direction.RIGHT:
+                return Move.FORWARD
+
+        return None
+
+    def is_adjacent(self, p1, p2):
+        return (abs(p1.x - p2.x) == 1 and abs(p1.y - p2.y) == 0) or (abs(p1.x - p2.x) == 0 and abs(p1.y - p2.y) == 1)
 
     def prune_legal_moves(self, legal_moves):
         game_map = self.game.map
