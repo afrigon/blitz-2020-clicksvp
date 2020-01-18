@@ -43,15 +43,12 @@ class Bot:
             int, Player
         ] = game_message.generate_players_by_id_dict()
 
-        legal_moves = self.get_legal_moves_for_current_tick(
-            game=game_message.game, players_by_id=players_by_id
-        )
-
         legal_moves = self.prune_legal_moves(
             legal_moves,
             (self.player.position.x, self.player.position.y),
             self.player.direction,
         )
+
         if legal_moves:
             if len(self.player.tail) > TAIL_THRESHOLD:
                 print(self.game.pretty_map)
