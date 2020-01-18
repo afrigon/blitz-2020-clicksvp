@@ -306,7 +306,6 @@ class Bot:
 
     def pathfind_blackhole(self, start, destination):
         start = Point(start[0], start[1])
-        print("coucou")
 
         if self.player.direction == Direction.UP:
             return (
@@ -352,28 +351,25 @@ class Bot:
         return self.suicide()
 
     def _pathfind_blackhole(self, start, destination):
-        print("hello1")
         path = self.pathfind_with_illegal(start, destination, [])
+        flood_fill(path)
         next_move = path[-1]
-        print("hello2")
+
         path += self.pathfind_with_illegal(
             destination,
             (self.player.spawn_position.x, self.player.spawn_position.y),
             path,
         )
-        print("hello3")
+        flood_fill(path)
+
         path += self.owned_cells()
-        print("hello4")
         path += [
             (pos.x, pos.y) for pos in self.player.tail + [self.player.position]
         ]
-        print("hello5")
 
         for point in flood_fill(path):
             if point in self.items["!"]:
-                print("yo")
                 return None
-        print("hello")
 
         return next_move
 
@@ -650,9 +646,9 @@ def flood_fill(points):
     """
     visited = set(points)
 
-    min_x = float("inf")
+    min_x = 0
     max_x = 0
-    min_y = float("inf")
+    min_y = 0
     max_y = 0
 
     for x, y in visited:
@@ -661,14 +657,14 @@ def flood_fill(points):
         min_y = min(min_y, y)
         max_y = max(max_y, y)
 
-    grid = [[0 for x in range(min_x, max_x)] for y in range(min_y, max_y)]
+    grid = [[0 for x in range(min_x, max_x + 1)] for y in range(min_y, max_y + 1)]
 
-    print("\n".join("".join(row) for row in grid))
+    print("\n".join("".join(str(x) for x in row) for row in grid))
 
     for x, y in visited:
-        grid[x][y] = 1
+        grid[y][x] = 1
 
-    print("\n".join("".join(row) for row in grid))
+    print("\n".join("".join(str(x) for x in row) for row in grid))
 
     candidates = Counter()
     for point in visited:
@@ -701,7 +697,6 @@ def flood_fill(points):
 
     stack = [c for c, count in candidates.items() if count > 1]
     while stack:
-        print(len(stack))
         current_point = stack.pop()
         if current_point in visited:
             continue
