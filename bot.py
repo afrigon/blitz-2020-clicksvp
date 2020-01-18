@@ -26,18 +26,11 @@ class Bot:
             game=game_message.game, players_by_id=players_by_id
         )
 
-        # init
         self.player = players_by_id[0]
         self.opponent = players_by_id.get(1, None)
         self.game = game_message.game
 
         legal_moves = self.prune_legal_moves(legal_moves)
-
-        # pprint(game_message)
-        # print(game_message.game.pretty_map)
-
-        if self.can_stomp_opponent(players_by_id):
-            self.stomp_opponent(players_by_id)
 
         return random.choice(legal_moves)
 
@@ -46,55 +39,50 @@ class Bot:
         rowcount = len(game_map)
         colcount = len(game_map[0])
 
-        player_position = self.player.position
-        player_direction = self.player.direction
-
         asteroid_locations = {
             (point.x, point.y) for row in game_map for col in row if col == "W"
         }
 
-        playerx, playery = player_position
-
         moves = self.get_moves()
 
         valid_moves = {
-                move
-                if ... not in asteroid_locations
-                }
+            move
+            for (move, position) in moves
+            if position not in asteroid_locations
+            and move in legal_moves
+            and 0 <= position[0] < rowcount
+            and 0 <= position[1] < colcount
+        }
 
-        map_rows = len(self.game.map)
-        print(self.player)
-        print(dir(self.game))
-        print(self.game.map)
-        # print(dir(game_state))
+        return valid_moves
 
     def get_moves(self):
         position = self.player.position
         row, col = position.x, position.y
-        if self.direction == 'UP':
+        if self.direction == "UP":
             return [
-                    ('FORWARD', (row - 1, col)),
-                    ('TURN_LEFT', (row, col - 1)),
-                    ('TURN_RIGHT', (row, col + 1))
-                    ]
-        if self.direction == 'DOWN':
+                ("FORWARD", (row - 1, col)),
+                ("TURN_LEFT", (row, col - 1)),
+                ("TURN_RIGHT", (row, col + 1)),
+            ]
+        if self.direction == "DOWN":
             return [
-                    ('FORWARD', (row + 1, col)),
-                    ('TURN_LEFT', (row, col + 1)),
-                    ('TURN_RIGHT', (row, col - 1))
-                    ]
-        if self.direction == 'LEFT':
+                ("FORWARD", (row + 1, col)),
+                ("TURN_LEFT", (row, col + 1)),
+                ("TURN_RIGHT", (row, col - 1)),
+            ]
+        if self.direction == "LEFT":
             return [
-                    ('FORWARD', (row, col - 1)),
-                    ('TURN_LEFT', (row - 1, col)),
-                    ('TURN_RIGHT', (row + 1 , col))
-                    ]
-        if self.direction == 'RIGHT':
+                ("FORWARD", (row, col - 1)),
+                ("TURN_LEFT", (row - 1, col)),
+                ("TURN_RIGHT", (row + 1, col)),
+            ]
+        if self.direction == "RIGHT":
             return [
-                    ('FORWARD', (row, col + 1)),
-                    ('TURN_LEFT', (row + 1, col)),
-                    ('TURN_RIGHT', (row - 1, col))
-                    ]
+                ("FORWARD", (row, col + 1)),
+                ("TURN_LEFT", (row + 1, col)),
+                ("TURN_RIGHT", (row - 1, col)),
+            ]
 
     def can_stomp_opponent(self, players_by_id):
         pass
