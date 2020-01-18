@@ -6,8 +6,7 @@ from game_message import *
 from bot_message import *
 import random
 
-TAIL_THRESHOLD = 10
-TAIL_INCREMENT = 2
+TAIL_THRESHOLD = 15
 
 
 def manhattan_distance(p1, p2):
@@ -96,6 +95,7 @@ class Bot:
                     (self.player.position.x, self.player.position.y),
                     destination,
                 )
+
             # DO NOT USE THIS, DOES NOT WORK YET
             # return self.move_away_from_owned_cells(legal_moves, owned_cells)
             return random.choice(legal_moves)[0]
@@ -275,14 +275,6 @@ class Bot:
     ):
         game_map = self.game.map
 
-        # asteroids AND BLACKHOLES
-        asteroid_locations = {
-            (coli, rowi)
-            for rowi, row in enumerate(game_map)
-            for coli, col in enumerate(row)
-            if col in "W!"
-        }
-
         moves = self.get_moves(player_position, player_direction)
 
         rowcount = len(game_map)
@@ -293,7 +285,7 @@ class Bot:
         valid_moves = []
         for (move, position) in moves:
             # This code is trash but it works
-            if position in self.items["W"]:
+            if position in self.items["W"] or position in self.items["!"]:
                 continue
             if position in tail_locations:
                 continue
