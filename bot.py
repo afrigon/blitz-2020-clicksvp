@@ -67,9 +67,9 @@ class Bot:
             self.player.direction,
         )
 
-        # TODO: EXPERIMENTAL, DO NOT USE YET
         if self.player.position == self.player.spawn_position:
             TAIL_THRESHOLD += TAIL_INCREMENT
+
         if self.goal:
             if (self.player.position.x, self.player.position.y) == self.goal:
                 self.goal = None
