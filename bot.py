@@ -36,7 +36,7 @@ class Bot:
                 self.opponents.append(player)
 
         for o in self.opponents:
-            self.opponents_spawn = [opp.spawn_position for opp in self.opponents]
+            self.opponents_spawn.append(o.spawn_position)
             if self.is_adjacent(o.position, self.player.position):
                 if o.position.x < self.player.position.x:
                     return self.move(Direction.LEFT)
