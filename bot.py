@@ -6,8 +6,7 @@ from game_message import *
 from bot_message import *
 import random
 
-TAIL_THRESHOLD = 10
-TAIL_INCREMENT = 2
+TAIL_THRESHOLD = 15
 
 
 def manhattan_distance(p1, p2):
@@ -69,10 +68,9 @@ class Bot:
             self.player.direction,
         )
 
-        # TODO: EXPERIMENTAL, DO NOT USE YET
-        #if self.player.position == self.player.spawn_position:
-        #    TAIL_THRESHOLD += TAIL_INCREMENT
-            
+        if self.player.position == self.player.spawn_position:
+            TAIL_THRESHOLD += TAIL_INCREMENT
+
         if self.goal:
             if (self.player.position.x, self.player.position.y) == self.goal:
                 self.goal = None
@@ -99,6 +97,7 @@ class Bot:
                     (self.player.position.x, self.player.position.y),
                     destination,
                 )
+
             # DO NOT USE THIS, DOES NOT WORK YET
             # return self.move_away_from_owned_cells(legal_moves, owned_cells)
             return random.choice(legal_moves)[0]
