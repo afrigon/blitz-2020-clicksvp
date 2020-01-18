@@ -663,7 +663,7 @@ def flood_fill(points):
 
     grid = [[0 for x in range(min_x, max_x)] for y in range(min_y, max_y)]
 
-    print(grid)
+    print("\n".join("".join(row) for row in grid))
 
     for x, y in visited:
         grid[y][x] = 1
