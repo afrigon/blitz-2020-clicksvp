@@ -26,11 +26,27 @@ class Bot:
         self.goal = None
 
     def get_next_move(self, game_message: GameMessage) -> Move:
+        try:
+            return self._get_next_move(game_message)
+        except Exception as e:
+            try:
+                print(e)
+                legal_moves = [Move.FORWARD, Move.TURN_LEFT, Move.TURN_RIGHT]
+                
+                next_moves = self.prune_legal_moves(
+                    legal_moves, (self.player.position.x, self.player.position.y), self.player.direction
+                )
+                if len(next_moves) > 0:
+                    return random.choice(next_moves[0])
+                return None
+            except Exception as e:
+                print(e)
+
+    def _get_next_move(self, game_message: GameMessage) -> Move:
         global TAIL_THRESHOLD
         self.game = game_message.game
         self.opponents = []
         self.opponents_spawn = []
-
         # print(self.game.pretty_map)
 
         for player in game_message.players:
