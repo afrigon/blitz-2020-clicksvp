@@ -31,6 +31,7 @@ class Bot:
             return self._get_next_move(game_message)
         except Exception as e:
             try:
+                raise e
                 print(e)
                 legal_moves = [Move.FORWARD, Move.TURN_LEFT, Move.TURN_RIGHT]
 
@@ -41,6 +42,7 @@ class Bot:
                     return random.choice(next_moves[0])
                 return None
             except Exception as e:
+                raise e
                 print(e)
 
     def _get_next_move(self, game_message: GameMessage) -> Move:
@@ -111,12 +113,12 @@ class Bot:
                 self.goal = self.closest_point_from_player(candidate)
 
             if self.goal:
-                self.pathfind_blackhole(
+                return self.pathfind_blackhole(
                     (self.player.position.x, self.player.position.y), self.goal
                 )
-                return self.pathfind(
-                    (self.player.position.x, self.player.position.y), self.goal
-                )
+                #return self.pathfind(
+                #    (self.player.position.x, self.player.position.y), self.goal
+                #)
 
             # if blitzerium on the map, go for it
             if len(self.items["$"]) > 0:
@@ -135,18 +137,25 @@ class Bot:
                 except:
                     pass
 
-                return self.pathfind(
+                return self.pathfind_blackhole(
                     (self.player.position.x, self.player.position.y), self.goal
                 )
+                #return self.pathfind(
+                #    (self.player.position.x, self.player.position.y), self.goal
+                #)
 
             owned_cells = self.owned_cells()
             if len(self.player.tail) > TAIL_THRESHOLD:
                 destination = self.closest_point_from_player(owned_cells)
 
-                return self.pathfind(
+                return self.pathfind_blackhole(
                     (self.player.position.x, self.player.position.y),
                     destination,
                 )
+               # return self.pathfind(
+               #     (self.player.position.x, self.player.position.y),
+               #     destination,
+               # )
 
             # DO NOT USE THIS, DOES NOT WORK YET
             return self.move_away_from_owned_cells(legal_moves, owned_cells)
@@ -291,14 +300,39 @@ class Bot:
         )
 
     def pathfind_blackhole(self, start, destination):
+        start = Point(start[0], start[1])
+        print("coucou")
+
+        if self.player.direction == Direction.UP:
+            return self._pathfind_blackhole((start.x, start.y - 1), destination) or self._pathfind_blackhole((start.x + 1, start.y), destination) or self._pathfind_blackhole((start.x - 1, start.y), destination)
+        elif self.player.direction == Direction.DOWN:
+            return self._pathfind_blackhole((start.x, start.y + 1), destination) or self._pathfind_blackhole((start.x + 1, start.y), destination) or self._pathfind_blackhole((start.x - 1, start.y), destination)
+        elif self.player.direction == Direction.LEFT:
+            return self._pathfind_blackhole((start.x - 1, start.y), destination) or self._pathfind_blackhole((start.x, start.y + 1), destination) or self._pathfind_blackhole((start.x, start.y - 1), destination)
+        elif self.player.direction == Direction.RIGHT:
+            return self._pathfind_blackhole((start.x + 1, start.y), destination) or self._pathfind_blackhole((start.x, start.y + 1), destination) or self._pathfind_blackhole((start.x, start.y - 1), destination)
+
+        return self.suicide()
+
+    def _pathfind_blackhole(self, start, destination):
+        print("hello1")
         path = self.pathfind_with_illegal(start, destination, [])
+        next_move = path[-1]
+        print("hello2")
         path += self.pathfind_with_illegal(destination, (self.player.spawn_position.x, self.player.spawn_position.y), path)
-        path += self.owned_cells
+        print("hello3")
+        path += self.owned_cells()
+        print("hello4")
         path += [(pos.x, pos.y) for pos in self.player.tail + [self.player.position]]
+        print("hello5")
 
-        print(self.game.pretty_map)
-        print(path)
+        for point in flood_fill(path):
+            if point in self.items['!']:
+                print("yo")
+                return None
+        print("hello")
 
+        return next_move
 
     def pathfind_with_illegal(self, start, destination, illegal):
         legal_moves = [Move.FORWARD, Move.TURN_LEFT, Move.TURN_RIGHT]
@@ -604,6 +638,7 @@ def flood_fill(points):
 
     stack = [c for c, count in candidates.items() if count > 1]
     while stack:
+        print(len(stack))
         current_point = stack.pop()
         if current_point in visited:
             continue
