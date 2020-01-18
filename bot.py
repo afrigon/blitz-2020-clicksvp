@@ -83,19 +83,21 @@ class Bot:
 
             # if blitzerium on the map, go for it
             if len(self.items['$']) > 0:
-                self.goal = self.items['$'].pop()
+                self.goal = self.closest_point_from_player(self.items['$'])
+                self.items['$'].remove(self.goal)
+
                 return self.pathfind(
                     (self.player.position.x, self.player.position.y),
                     self.goal
                 )
 
             owned_cells = self.owned_cells()
-                if len(self.player.tail) > TAIL_THRESHOLD:
-                    destination = self.closest_point_from_player(owned_cells)
-                    return self.pathfind(
-                        (self.player.position.x, self.player.position.y),
-                        destination,
-                    )
+            if len(self.player.tail) > TAIL_THRESHOLD:
+                destination = self.closest_point_from_player(owned_cells)
+                return self.pathfind(
+                    (self.player.position.x, self.player.position.y),
+                    destination,
+                )
             return self.move_away_from_owned_cells(owned_cells)
 
         return self.move_from_direction(self.player.direction, Direction.UP)
