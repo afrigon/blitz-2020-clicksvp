@@ -16,6 +16,7 @@ class Bot:
         self.player = None
         self.opponents = []
         self.game = None
+        self.player_id = None
 
     def get_next_move(self, game_message: GameMessage) -> Move:
         self.game = game_message.game
@@ -101,8 +102,6 @@ class Bot:
         return None
 
     def is_adjacent(self, p1, p2):
-        print(p1)
-        print(p2)
         return (abs(p1.x - p2.x) == 1 and abs(p1.y - p2.y) == 0) or (
             abs(p1.x - p2.x) == 0 and abs(p1.y - p2.y) == 1
         )
@@ -199,7 +198,7 @@ class Bot:
             (rowi, coli)
             for rowi, row in enumerate(game_map)
             for coli, col in enumerate(row)
-            if col == TileType.ASTEROIDS
+            if col == "W"
         }
 
         moves = self.get_moves(player_position, player_direction)
@@ -220,7 +219,7 @@ class Bot:
                 continue
             if not (0 <= position[0] < rowcount):
                 continue
-            if not (0 <= position[0] < colcount):
+            if not (0 <= position[1] < colcount):
                 continue
             valid_moves.append((move, position))
 
