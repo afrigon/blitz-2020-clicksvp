@@ -28,6 +28,7 @@ async def game_loop(websocket: websockets.WebSocketServerProtocol, bot: Bot):
         try:
             message = await websocket.recv()
         except websockets.exceptions.ConnectionClosed:
+
             # Connection is closed, the game is probably over
             break
         game_message: GameMessage = GameMessage.from_json(message)

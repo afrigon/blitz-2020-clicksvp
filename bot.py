@@ -28,7 +28,8 @@ class Bot:
         global TAIL_THRESHOLD
         self.game = game_message.game
         self.opponents = []
-
+        self.opponents_spawn = []
+        
         for player in game_message.players:
             if player.id == self.game.player_id:
                 self.player = player
@@ -36,6 +37,7 @@ class Bot:
                 self.opponents.append(player)
 
         for o in self.opponents:
+            self.opponents_spawn = [opp.spawn_position for opp in self.opponents]
             if self.is_adjacent(o.position, self.player.position):
                 if o.position.x < self.player.position.x:
                     return self.move(Direction.LEFT)
@@ -286,7 +288,7 @@ class Bot:
         valid_moves = []
         for (move, position) in moves:
             # This code is trash but it works
-            if position in self.items["W"] or position in self.items["!"]:
+            if position in self.items["W"]or position in self.items["!"] or self.is_spawn_point(position):
                 continue
             if position in tail_locations:
                 continue
@@ -299,6 +301,12 @@ class Bot:
             valid_moves.append((move, position))
 
         return list(valid_moves)
+
+    def is_spawn_point(self, position):
+        for spawn_point in self.opponents_spawn:
+            if position == (spawn_point.x, spawn_point.y):
+                return True
+        return False
 
     def tail_locations(self):
         locations = [(p.x, p.y) for p in self.player.tail[1:]]
