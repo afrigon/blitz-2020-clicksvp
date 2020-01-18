@@ -13,6 +13,7 @@ class Bot:
         self.player = None
         self.opponent = None
         self.game = None
+        self.player_id = None
 
     def get_next_move(self, game_message: GameMessage) -> Move:
         """
@@ -25,10 +26,10 @@ class Bot:
         legal_moves = self.get_legal_moves_for_current_tick(
             game=game_message.game, players_by_id=players_by_id
         )
-
-        self.player = players_by_id[0]
-        self.opponent = players_by_id.get(1, None)
         self.game = game_message.game
+        self.player_id = self.game.player_id
+        self.player = players_by_id[self.player_id]
+        self.opponent = players_by_id.get(1, None)  # TODO add others opoenents 
 
         print("legal_moves: ", legal_moves)
         legal_moves = self.prune_legal_moves(legal_moves)

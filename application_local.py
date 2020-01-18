@@ -3,6 +3,7 @@
 import asyncio
 import os
 import websockets
+import getpass
 
 from bot import Bot
 from bot_message import BotMessage, MessageType, Move
@@ -17,7 +18,7 @@ async def run():
         if "TOKEN" in os.environ:
             await websocket.send(BotMessage(type=MessageType.REGISTER, token=os.environ["TOKEN"]).to_json())
         else:
-            await websocket.send(BotMessage(type=MessageType.REGISTER, name="CLICKSVP").to_json())
+            await websocket.send(BotMessage(type=MessageType.REGISTER, name="Bot-"+getpass.getuser()).to_json())
 
         await game_loop(websocket=websocket, bot=bot)
 
