@@ -229,7 +229,7 @@ class Bot:
         game_map = self.game.map
 
         asteroid_locations = {
-            (rowi, coli)
+            (coli, rowi)
             for rowi, row in enumerate(game_map)
             for coli, col in enumerate(row)
             if col == "W"
