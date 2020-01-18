@@ -33,7 +33,7 @@ class Bot:
             try:
                 print(e)
                 legal_moves = [Move.FORWARD, Move.TURN_LEFT, Move.TURN_RIGHT]
-                
+
                 next_moves = self.prune_legal_moves(
                     legal_moves, (self.player.position.x, self.player.position.y), self.player.direction
                 )
