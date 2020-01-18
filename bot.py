@@ -33,15 +33,16 @@ class Bot:
             try:
                 print(e)
                 legal_moves = [Move.FORWARD, Move.TURN_LEFT, Move.TURN_RIGHT]
-                
+
                 next_moves = self.prune_legal_moves(
                     legal_moves, (self.player.position.x, self.player.position.y), self.player.direction
                 )
                 if len(next_moves) > 0:
                     return random.choice(next_moves[0])
-                return None
+                return Move.TURN_LEFT
             except Exception as e:
                 print(e)
+                return Move.TURN_LEFT
 
     def _get_next_move(self, game_message: GameMessage) -> Move:
         global TAIL_THRESHOLD
