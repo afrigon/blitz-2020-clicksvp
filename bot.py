@@ -31,35 +31,24 @@ class Bot:
         for o in self.opponents:
             if self.is_adjacent(o.position, self.player.position):
                 if o.position.x < self.player.position.x:
-                    return self.move_from_direction(
-                        self.player.direction, Direction.LEFT
-                    )
+                    return self.move(Direction.LEFT)
                 if o.position.x > self.player.position.x:
-                    return self.move_from_direction(
-                        self.player.direction, Direction.RIGHT
-                    )
+                    return self.move(Direction.RIGHT)
                 if o.position.y > self.player.position.y:
-                    return self.move_from_direction(
-                        self.player.direction, Direction.DOWN
-                    )
+                    return self.move(Direction.DOWN)
                 if o.position.y < self.player.position.y:
-                    return self.move_from_direction(
-                        self.player.direction, Direction.UP
-                    )
+                    return self.move(Direction.UP)
 
         players_by_id: Dict[
             int, Player
         ] = game_message.generate_players_by_id_dict()
-
-        legal_moves = self.get_legal_moves_for_current_tick(
-            game=game_message.game, players_by_id=players_by_id
-        )
 
         legal_moves = self.prune_legal_moves(
             legal_moves,
             (self.player.position.x, self.player.position.y),
             self.player.direction,
         )
+
         if legal_moves:
             if len(self.player.tail) > TAIL_THRESHOLD:
                 print(self.game.pretty_map)
@@ -73,6 +62,9 @@ class Bot:
             return random.choice(legal_moves)[0]
 
         return self.move_from_direction(self.player.direction, Direction.UP)
+
+    def move(self, direction):
+        return self.move_from_direction(self.player.direction, direction)
 
     def move_from_direction(self, player_direction, move_direction):
         if player_direction == Direction.UP:
@@ -203,7 +195,7 @@ class Bot:
             (rowi, coli)
             for rowi, row in enumerate(game_map)
             for coli, col in enumerate(row)
-            if col == TileType.ASTEROIDS
+            if col == "W"
         }
 
         moves = self.get_moves(player_position, player_direction)
@@ -224,7 +216,7 @@ class Bot:
                 continue
             if not (0 <= position[0] < rowcount):
                 continue
-            if not (0 <= position[0] < colcount):
+            if not (0 <= position[1] < colcount):
                 continue
             valid_moves.append((move, position))
 
