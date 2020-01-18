@@ -61,15 +61,10 @@ class Bot:
 
         if legal_moves:
             if len(self.player.tail) > TAIL_THRESHOLD:
-                # DO NO USE, DOES NOT FIND CLOSEST OWNED CELL
-                # DO NOT DELETE, WILL FIX SOON
                 destination = self.closest_owned_cell()
                 return self.pathfind(
                     (self.player.position.x, self.player.position.y),
-                    (
-                        self.player.spawn_position.x,
-                        self.player.spawn_position.y,
-                    ),
+                    destination,
                 )
             return random.choice(legal_moves)[0]
 
@@ -78,7 +73,7 @@ class Bot:
     def closest_owned_cell(self):
         owned = "C-" + str(self.game.player_id)
         owned_cells = {
-            (rowi, coli)
+            (coli, rowi)
             for rowi, row in enumerate(self.game.map)
             for coli, col in enumerate(row)
             if col == owned
