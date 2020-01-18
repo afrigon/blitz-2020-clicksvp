@@ -28,7 +28,7 @@ class Bot:
         self.game = game_message.game
         self.opponents = []
         self.opponents_spawn = []
-        
+
         for player in game_message.players:
             if player.id == self.game.player_id:
                 self.player = player
@@ -58,6 +58,7 @@ class Bot:
                 if col in ["$", "!", "W", "%"]:
                     self.items[col].add((coli, rowi))
 
+        print(self.game.pretty_map)
         legal_moves = self.get_legal_moves_for_current_tick(
             game=game_message.game, players_by_id=players_by_id
         )
@@ -67,9 +68,6 @@ class Bot:
             (self.player.position.x, self.player.position.y),
             self.player.direction,
         )
-
-        if self.player.position == self.player.spawn_position:
-            TAIL_THRESHOLD += TAIL_INCREMENT
 
         if self.goal:
             if (self.player.position.x, self.player.position.y) == self.goal:
@@ -214,7 +212,10 @@ class Bot:
                     parent[position] = current_position
 
         if destination not in parent:
-            return random.choice(legal_moves)[0]
+            next_moves = self.prune_legal_moves(
+                legal_moves, start, self.player.direction
+            )
+            return random.choice(next_moves)[0]
 
         path = [destination]
         while path[-1] != start:
